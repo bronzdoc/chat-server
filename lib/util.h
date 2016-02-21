@@ -1,5 +1,6 @@
-#ifndef SERVER_UTIL_H
-#define SERVER_UTIL_H
+#ifndef __SERVER_UTIL_H__
+#define __SERVER_UTIL_H__
+
 void
 print_error(char* msg)
 {
