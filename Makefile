@@ -1,4 +1,4 @@
 
 
 default:
-	gcc -g -Wall server.c -o server
+	gcc -g -Wall server.c -lpthread -o server

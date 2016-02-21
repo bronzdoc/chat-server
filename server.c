@@ -1,14 +1,22 @@
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
 #include <errno.h>
+#include <pthread.h>
 #include "lib/util.h"
 
 #define EXIT 0
-#define SERVER_PORT "3490"
+#define SERVER_PORT "3494"
+#define MAX_CONNECTIONS 5
+
+int store_connection(int [MAX_CONNECTIONS], int);
+void* perform();
+
+int connection_pool[MAX_CONNECTIONS];
 
 int
 main(int argc, char* argv[])
@@ -20,7 +28,7 @@ main(int argc, char* argv[])
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // fill my ip for me
 
-    getaddrinfo(NULL, SERVER_PORT , &hints, &res);
+    getaddrinfo(NULL, SERVER_PORT, &hints, &res);
 
     /* Create socket */
     int sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -36,8 +44,7 @@ main(int argc, char* argv[])
     }
 
     /* Listen for connection in the bound socket */
-    int connections_allowed = 5;
-    if(listen(sockfd, connections_allowed) == -1) {
+    if(listen(sockfd, MAX_CONNECTIONS) == -1) {
         print_error("failed to listen on socket");
         return errno;
     }
@@ -49,24 +56,62 @@ main(int argc, char* argv[])
     struct sockaddr_storage client_addr;
     socklen_t addr_size;
     int new_sockfd;
-    if ((new_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &addr_size)) == -1) {
-        print_error("failed when accepting socket connection");
-        return errno;
-    }
+    while(1) {
+        if ((new_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &addr_size)) == -1) {
+            print_error("failed when accepting socket connection");
+            return errno;
+        }
 
+        pthread_t thread;
+        int err = pthread_create(&thread, NULL, (void*)&perform, &new_sockfd);
+        if (err == -1)
+            print_error("can't create thread");
+        else
+            print_info("Thread created successfully");
+    }
+    return EXIT;
+}
+
+void *
+perform(int *sockfd)
+{
+    int new_sockfd = *sockfd;
     /* Do some cool shit! */
+    int stored = store_connection(connection_pool, new_sockfd);
+    if (stored)
+        print_info("Connection stored");
+    else
+        print_info("Couldn't store connection, max connections reached...");
 
     // Send stuff to the client socket
-    char* msg = "Connection stablished...";
+    char* msg = "Connection stablished...\n";
     int msg_len = strlen(msg);
     if (send(new_sockfd, msg, msg_len, 0) == -1) {
         print_error("failed when sending message");
-        return errno;
+        exit(errno);
     }
 
     char msg_buffer[1024];
-    recv(new_sockfd, &msg_buffer, 1024, 0);
-    printf("msg:%s\n", msg_buffer);
+    while (recv(new_sockfd, &msg_buffer, 1024, 0)) {
+        printf("msg:%s\n", msg_buffer);
+    }
+    return NULL;
+}
 
-    return EXIT;
+int
+store_connection(int pool[MAX_CONNECTIONS], int sock_fd)
+{
+    static int connection_counter = 0;
+    int index = 0;
+    if (connection_counter == 0)
+        index = connection_counter;
+    else
+        index = (connection_counter += 1);
+
+    if (connection_counter <= MAX_CONNECTIONS) {
+        print_info("got here");
+        pool[index] = sock_fd;
+        return 1;
+    }
+    return 0;
 }
