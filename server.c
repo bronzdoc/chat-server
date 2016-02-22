@@ -62,8 +62,6 @@ main(int argc, char* argv[])
         int err = pthread_create(&thread, NULL, (void*)&perform, &new_sockfd);
         if (err == -1)
             print_error("can't create thread");
-        else
-            print_info("Thread created successfully");
     }
     return EXIT;
 }
@@ -73,6 +71,7 @@ perform(int *sockfd)
 {
     int new_sockfd = *sockfd;
     int stored = store_connection(connection_pool, new_sockfd);
+    // TODO just testing shit, remove this loging later
     if (stored)
         print_info("Connection stored");
     else
@@ -104,7 +103,6 @@ store_connection(int pool[MAX_CONNECTIONS], int sock_fd)
         index = (connection_counter += 1);
 
     if (connection_counter <= MAX_CONNECTIONS) {
-        print_info("got here");
         pool[index] = sock_fd;
         return 1;
     }
