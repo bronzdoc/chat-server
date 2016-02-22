@@ -1,15 +1,11 @@
 #ifndef __SERVER_UTIL_H__
 #define __SERVER_UTIL_H__
+#define MAX_CONNECTIONS 5
 
-void
-print_error(char* msg)
-{
-    printf("ERROR: %s\n", msg);
-}
+void print_error(char* msg);
+void print_info(char* msg);
 
-void
-print_info(char* msg) {
-    printf("INFO: %s\n", msg);
-}
+int store_connection(int [MAX_CONNECTIONS], int);
+void* perform();
 
 #endif

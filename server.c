@@ -11,10 +11,6 @@
 
 #define EXIT 0
 #define SERVER_PORT "3494"
-#define MAX_CONNECTIONS 5
-
-int store_connection(int [MAX_CONNECTIONS], int);
-void* perform();
 
 int connection_pool[MAX_CONNECTIONS];
 
@@ -76,7 +72,6 @@ void *
 perform(int *sockfd)
 {
     int new_sockfd = *sockfd;
-    /* Do some cool shit! */
     int stored = store_connection(connection_pool, new_sockfd);
     if (stored)
         print_info("Connection stored");
@@ -93,7 +88,7 @@ perform(int *sockfd)
 
     char msg_buffer[1024];
     while (recv(new_sockfd, &msg_buffer, 1024, 0)) {
-        printf("msg:%s\n", msg_buffer);
+        printf("msg: %s\n", msg_buffer);
     }
     return NULL;
 }
@@ -114,4 +109,15 @@ store_connection(int pool[MAX_CONNECTIONS], int sock_fd)
         return 1;
     }
     return 0;
+}
+
+void
+print_error(char* msg)
+{
+    printf("ERROR: %s\n", msg);
+}
+
+void
+print_info(char* msg) {
+    printf("INFO: %s\n", msg);
 }
