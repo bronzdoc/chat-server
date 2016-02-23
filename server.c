@@ -7,12 +7,15 @@
 #include <netdb.h>
 #include <errno.h>
 #include <pthread.h>
+
 #include "lib/util.h"
+#include "lib/user.h"
 
 #define EXIT 0
 #define SERVER_PORT "3494"
 
 int connection_pool[MAX_CONNECTIONS];
+usert_t users[MAX_USERS];
 
 int
 main(int argc, char* argv[])
