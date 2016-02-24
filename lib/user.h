@@ -3,21 +3,13 @@
 
 #define MAX_USERS 20
 
-/* User type */
-typedef struct user_t {
-    int sockfd;
-    char* nick;
-} user;
+typedef struct { int sockfd; char* nick;   } user_t;
+typedef struct { user_t* data[MAX_USERS];  } user_store_t;
 
-typedef struct ser_store_t {
-    user_t data[MAX_USERS];
-} user_stroe;
-
-
-/* user_store functions */
-user_t us_search(*user_store store, user* user);
-void us_add(*user_store store, user* user);
-void us_remove(*user_store store, user* user);
-void _us_generate_key_();
+user_store_t create_user_store();
+user_t* us_search(user_store_t* store, char* username);
+int us_add(user_store_t* store, user_t* user);
+int us_remove(user_store_t* store, user_t* user);
+int _us_generate_key_();
 
 #endif
