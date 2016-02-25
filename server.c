@@ -12,13 +12,48 @@
 #include "lib/user.h"
 
 #define EXIT 0
-#define SERVER_PORT "3494"
+#define DEFAULT_PORT "3494"
+
+void* perform();
 
 user_store_t user_store;
+
+char* NICKS[] = {
+    "Rocket Raccoon",
+    "Groot",
+    "Drax",
+    "Calypso",
+    "Bishop",
+    "Cypher",
+    "Devos",
+    "Dazzler",
+    "Dormammu",
+    "Debrii",
+    "Fenris",
+    "Galia",
+    "Havok",
+    "Jackal",
+    "Jubilee",
+    "Kabuki",
+    "Kylun",
+    "Landau",
+    "Yondu",
+    "Ozymandias"
+};
+
 
 int
 main(int argc, char* argv[])
 {
+    /* Check if user is setting up a port */
+    char* port;
+    if (argc > 1 &&  strcmp(argv[1], "-p") == 0) {
+        if (argv[2] != NULL)
+            port = argv[2];
+    } else {
+        port = DEFAULT_PORT;
+    }
+
     user_store = create_user_store();
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof hints);
@@ -27,7 +62,7 @@ main(int argc, char* argv[])
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // fill my ip for me
 
-    getaddrinfo(NULL, SERVER_PORT, &hints, &res);
+    getaddrinfo(NULL, port, &hints, &res);
 
     /* Create socket */
     int sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
@@ -49,7 +84,7 @@ main(int argc, char* argv[])
     }
 
     // Show server message
-    printf("Listening on localhost:%s, CTRL+C to stop\n", SERVER_PORT);
+    printf("Listening on localhost:%s, CTRL+C to stop\n", port);
 
     /* Accept inconming connections */
     struct sockaddr_storage client_addr;
@@ -74,15 +109,15 @@ perform(int *sockfd)
 {
     int new_sockfd = *sockfd;
 
-    // Set user
+    /* Set user */
     user_t user;
     memset(&user, '0', sizeof user);
     user.sockfd = sockfd;
-    user.nick = "anonymous";
+    user.nick = NICKS[rand() % ARR_SIZE(NICKS)];
 
     us_add(&user_store, &user);
 
-    // Send stuff to the client socket
+    /* Send stuff to the client socket */
     char* msg = "Connection stablished...\n";
     int msg_len = strlen(msg);
     if (send(new_sockfd, msg, msg_len, 0) == -1) {
@@ -92,9 +127,8 @@ perform(int *sockfd)
 
     char msg_buffer[1024];
     while (recv(new_sockfd, &msg_buffer, 1024, 0)) {
-        printf("%s-%i: %s\n", user.nick, *user.sockfd, msg_buffer);
+        printf("%s: %s\n", user.nick, msg_buffer);
     }
     return NULL;
 }
-
 

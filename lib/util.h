@@ -5,6 +5,5 @@
 
 void print_error(char* msg);
 void print_info(char* msg);
-void* perform();
 
 #endif
