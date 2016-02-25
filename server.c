@@ -14,12 +14,12 @@
 #define EXIT 0
 #define SERVER_PORT "3494"
 
-int connection_pool[MAX_CONNECTIONS];
-usert_t users[MAX_USERS];
+user_store_t user_store;
 
 int
 main(int argc, char* argv[])
 {
+    user_store = create_user_store();
     struct addrinfo hints, *res;
     memset(&hints, 0, sizeof hints);
 
@@ -43,7 +43,7 @@ main(int argc, char* argv[])
     }
 
     /* Listen for connection in the bound socket */
-    if(listen(sockfd, MAX_CONNECTIONS) == -1) {
+    if(listen(sockfd, MAX_USERS) == -1) {
         print_error("failed to listen on socket");
         return errno;
     }
@@ -73,12 +73,14 @@ void *
 perform(int *sockfd)
 {
     int new_sockfd = *sockfd;
-    int stored = store_connection(connection_pool, new_sockfd);
-    // TODO just testing shit, remove this loging later
-    if (stored)
-        print_info("Connection stored");
-    else
-        print_info("Couldn't store connection, max connections reached...");
+
+    // Set user
+    user_t user;
+    memset(&user, '0', sizeof user);
+    user.sockfd = sockfd;
+    user.nick = "anonymous";
+
+    us_add(&user_store, &user);
 
     // Send stuff to the client socket
     char* msg = "Connection stablished...\n";
@@ -90,35 +92,9 @@ perform(int *sockfd)
 
     char msg_buffer[1024];
     while (recv(new_sockfd, &msg_buffer, 1024, 0)) {
-        printf("msg: %s\n", msg_buffer);
+        printf("%s-%i: %s\n", user.nick, *user.sockfd, msg_buffer);
     }
     return NULL;
 }
 
-int
-store_connection(int pool[MAX_CONNECTIONS], int sock_fd)
-{
-    static int connection_counter = 0;
-    int index = 0;
-    if (connection_counter == 0)
-        index = connection_counter;
-    else
-        index = (connection_counter += 1);
 
-    if (connection_counter <= MAX_CONNECTIONS) {
-        pool[index] = sock_fd;
-        return 1;
-    }
-    return 0;
-}
-
-void
-print_error(char* msg)
-{
-    printf("ERROR: %s\n", msg);
-}
-
-void
-print_info(char* msg) {
-    printf("INFO: %s\n", msg);
-}
