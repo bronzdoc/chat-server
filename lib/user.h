@@ -3,7 +3,7 @@
 
 #define MAX_USERS 20
 
-typedef struct { int sockfd; char* nick;   } user_t;
+typedef struct { int* sockfd; char* nick;   } user_t;
 typedef struct { user_t* data[MAX_USERS];  } user_store_t;
 
 user_store_t create_user_store();
