@@ -8,6 +8,7 @@ print_error(char* msg)
 }
 
 void
-print_info(char* msg) {
+print_info(char* msg)
+{
     printf("INFO: %s\n", msg);
 }
