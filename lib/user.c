@@ -1,3 +1,4 @@
+#include "stdio.h"
 #include "string.h"
 #include "user.h"
 
@@ -5,7 +6,8 @@
 user_store_t
 create_user_store() {
     user_store_t store;
-    memset(&store, '0', sizeof store);
+    memset(&store, '\0', sizeof store);
+    store.size = -1;
     return store;
 }
 
@@ -14,16 +16,20 @@ user_t*
 us_search(user_store_t* store, char* username)
 {
     int key =_us_generate_key_(username);
-    return store->data[key];
+    return store->index[key];
 }
 
 /* Add user to the user store */
 int
 us_add(user_store_t* store, user_t* user)
 {
+    printf("size: %d\n", store->size);
     int key =_us_generate_key_(user);
-    if (store->data[key] == NULL) {
-        store->data[key] = user;
+    if (store->index[key] == '\0') {
+        store->index[key] = user;
+        store->bag[++store->size] = user;
+        //printf("%d\n", user->sockfd);
+        //printf("%s\n", store->bag[0].nick);
         return 1;
     } else {
         return 0;
@@ -35,8 +41,8 @@ int
 us_remove(user_store_t* store, user_t* user)
 {
     int key =_us_generate_key_(user);
-    if (store->data[key] != NULL) {
-        store->data[key] = NULL;
+    if (store->index[key] != NULL) {
+        store->index[key] = NULL;
         return 1;
     } else {
         return 0;
