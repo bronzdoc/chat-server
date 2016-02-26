@@ -14,7 +14,7 @@
 #define EXIT 0
 #define DEFAULT_PORT "3494"
 
-void* perform();
+void* perform(user_t*);
 
 user_store_t user_store;
 
@@ -91,13 +91,20 @@ main(int argc, char* argv[])
     socklen_t addr_size;
     int new_sockfd;
     while(1) {
+        user_t user;
+
         if ((new_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &addr_size)) == -1) {
             print_error("failed when accepting socket connection");
             return errno;
         }
 
+        /* Set user */
+        memset(&user, '0', sizeof user);
+        user.sockfd = new_sockfd;
+        user.nick = NICKS[rand() % ARR_SIZE(NICKS)];
+
         pthread_t thread;
-        int err = pthread_create(&thread, NULL, (void*)&perform, &new_sockfd);
+        int err = pthread_create(&thread, NULL, (void*)&perform, &user);
         if (err == -1)
             print_error("can't create thread");
     }
@@ -105,29 +112,29 @@ main(int argc, char* argv[])
 }
 
 void *
-perform(int *sockfd)
+perform(user_t* user)
 {
-    int new_sockfd = *sockfd;
+    /* Store user in the user store */
+    us_add(&user_store, user);
 
-    /* Set user */
-    user_t user;
-    memset(&user, '0', sizeof user);
-    user.sockfd = sockfd;
-    user.nick = NICKS[rand() % ARR_SIZE(NICKS)];
-
-    us_add(&user_store, &user);
-
-    /* Send stuff to the client socket */
     char* msg = "Connection stablished...\n";
     int msg_len = strlen(msg);
-    if (send(new_sockfd, msg, msg_len, 0) == -1) {
+    if (send(user->sockfd, msg, msg_len, 0) == -1) {
         print_error("failed when sending message");
         exit(errno);
     }
 
     char msg_buffer[1024];
-    while (recv(new_sockfd, &msg_buffer, 1024, 0)) {
-        printf("%s: %s\n", user.nick, msg_buffer);
+    while (recv(user->sockfd, &msg_buffer, 1024, 0)) {
+        char res_buffer[1024];
+        printf("%s: %s\n", user->nick, msg_buffer);
+        strcpy(res_buffer, user->nick);
+        strcat(res_buffer, ": ");
+        strcat(res_buffer, msg_buffer);
+        send(user->sockfd, res_buffer, strlen(res_buffer), 0);
+        //for (i = 0; i <= user_store.size; i++) {
+        //    send(user_store.bag[i]->sockfd, res_buffer, strlen(res_buffer), 0);
+        //}
     }
     return NULL;
 }
