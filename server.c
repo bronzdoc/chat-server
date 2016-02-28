@@ -66,19 +66,19 @@ main(int argc, char* argv[])
 
     /* Create socket */
     int sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (sockfd == -1) {
+    if (sockfd < 0) {
         print_error("failed to create a socket");
         return errno;
     }
 
     /* Bind port to socket */
-    if (bind(sockfd, res->ai_addr, res->ai_addrlen) == -1) {
+    if (bind(sockfd, res->ai_addr, res->ai_addrlen) < 0) {
         print_error("failed to bind socket port");
         return errno;
     }
 
     /* Listen for connection in the bound socket */
-    if(listen(sockfd, MAX_USERS) == -1) {
+    if(listen(sockfd, MAX_USERS) < 0) {
         print_error("failed to listen on socket");
         return errno;
     }
@@ -93,7 +93,7 @@ main(int argc, char* argv[])
     while(1) {
         user_t user;
 
-        if ((new_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &addr_size)) == -1) {
+        if ((new_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &addr_size)) < 0) {
             print_error("failed when accepting socket connection");
             return errno;
         }
@@ -105,7 +105,7 @@ main(int argc, char* argv[])
 
         pthread_t thread;
         int err = pthread_create(&thread, NULL, (void*)&perform, &user);
-        if (err == -1)
+        if (err < 0)
             print_error("can't create thread");
     }
     return EXIT;
@@ -119,7 +119,7 @@ perform(user_t* user)
 
     char* msg = "Connection stablished...\n";
     int msg_len = strlen(msg);
-    if (send(user->sockfd, msg, msg_len, 0) == -1) {
+    if (send(user->sockfd, msg, msg_len, 0) < 0) {
         print_error("failed when sending message");
         exit(errno);
     }
@@ -127,14 +127,13 @@ perform(user_t* user)
     char msg_buffer[1024];
     while (recv(user->sockfd, &msg_buffer, 1024, 0)) {
         char res_buffer[1024];
-        printf("%s: %s\n", user->nick, msg_buffer);
+        int i;
         strcpy(res_buffer, user->nick);
         strcat(res_buffer, ": ");
         strcat(res_buffer, msg_buffer);
-        send(user->sockfd, res_buffer, strlen(res_buffer), 0);
-        //for (i = 0; i <= user_store.size; i++) {
-        //    send(user_store.bag[i]->sockfd, res_buffer, strlen(res_buffer), 0);
-        //}
+        for (i = 0; i < user_store.size; i++) {
+            send(user_store.bag[i]->sockfd, res_buffer, strlen(res_buffer), 0);
+        }
     }
     return NULL;
 }
