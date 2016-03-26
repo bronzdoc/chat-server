@@ -7,7 +7,7 @@ user_store_t
 create_user_store() {
     user_store_t store;
     memset(&store, '\0', sizeof store);
-    store.size = -1;
+    store.size = 0;
     return store;
 }
 
@@ -23,13 +23,10 @@ us_search(user_store_t* store, char* username)
 int
 us_add(user_store_t* store, user_t* user)
 {
-    printf("size: %d\n", store->size);
     int key =_us_generate_key_(user);
     if (store->index[key] == '\0') {
         store->index[key] = user;
-        store->bag[++store->size] = user;
-        //printf("%d\n", user->sockfd);
-        //printf("%s\n", store->bag[0].nick);
+        store->bag[store->size++] = user;
         return 1;
     } else {
         return 0;
@@ -60,8 +57,8 @@ _us_generate_key_(user_t* user)
     int len = strlen(user->nick);
 
     for (i = 0; i <= len ; i++) {
-        key += (int)user->nick[i];
+        key += user->nick[i];
     }
-    return key % len;
+    return key % MAX_USERS;
 }
 
