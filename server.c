@@ -91,7 +91,7 @@ main(int argc, char* argv[])
     socklen_t addr_size;
     int new_sockfd;
     while(1) {
-        user_t user;
+        user_t* user = (user_t*)malloc(sizeof(user_t));
 
         if ((new_sockfd = accept(sockfd, (struct sockaddr *)&client_addr, &addr_size)) < 0) {
             print_error("failed when accepting socket connection");
@@ -99,12 +99,13 @@ main(int argc, char* argv[])
         }
 
         /* Set user */
-        memset(&user, '0', sizeof user);
-        user.sockfd = new_sockfd;
-        user.nick = NICKS[rand() % ARR_SIZE(NICKS)];
+        //memset(user, '0', sizeof user);
+        user->sockfd = new_sockfd;
+        user->nick = NICKS[rand() % ARR_SIZE(NICKS)];
+        printf("user addr: %p - sockfd addr:%p\n", user, &user->sockfd);
 
         pthread_t thread;
-        int err = pthread_create(&thread, NULL, (void*)&perform, &user);
+        int err = pthread_create(&thread, NULL, (void*)&perform, user);
         if (err < 0)
             print_error("can't create thread");
     }
@@ -131,9 +132,9 @@ perform(user_t* user)
         strcpy(res_buffer, user->nick);
         strcat(res_buffer, ": ");
         strcat(res_buffer, msg_buffer);
-        for (i = 0; i < user_store.size; i++) {
+
+        for (i = 0; i < user_store.size; i++)
             send(user_store.bag[i]->sockfd, res_buffer, strlen(res_buffer), 0);
-        }
     }
     return NULL;
 }
