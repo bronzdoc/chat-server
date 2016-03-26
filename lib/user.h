@@ -1,7 +1,7 @@
 #ifndef __USER_H__
 #define __USER_H_
 
-#define MAX_USERS 20
+#define MAX_USERS 100
 
 typedef struct { int sockfd; char* nick; } user_t;
 typedef struct { user_t* index[MAX_USERS]; user_t* bag[MAX_USERS]; int size;} user_store_t;
