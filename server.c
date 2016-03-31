@@ -60,7 +60,8 @@ main(int argc, char* argv[])
 
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE; // fill my ip for me
+    /* get my ip */
+    hints.ai_flags = AI_PASSIVE;
 
     getaddrinfo(NULL, port, &hints, &res);
 
@@ -83,7 +84,7 @@ main(int argc, char* argv[])
         return errno;
     }
 
-    // Show server message
+    /* Show server message */
     printf("Listening on localhost:%s, CTRL+C to stop\n", port);
 
     /* Accept inconming connections */
@@ -99,7 +100,6 @@ main(int argc, char* argv[])
         }
 
         /* Set user */
-        //memset(user, '0', sizeof user);
         user->sockfd = new_sockfd;
         user->nick = NICKS[rand() % ARR_SIZE(NICKS)];
         printf("user addr: %p - sockfd addr:%p\n", user, &user->sockfd);
@@ -135,11 +135,11 @@ perform(user_t* user)
     char msg_buffer[1024];
     while (recv(user->sockfd, &msg_buffer, 1024, 0)) {
         char res_buffer[1024];
-        int i;
         strcpy(res_buffer, user->nick);
         strcat(res_buffer, ": ");
         strcat(res_buffer, msg_buffer);
 
+        int i;
         for (i = 0; i < user_store.size; i++)
             send(user_store.bag[i]->sockfd, res_buffer, strlen(res_buffer), 0);
 
