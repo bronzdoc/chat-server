@@ -14,7 +14,7 @@
 #define EXIT 0
 #define DEFAULT_PORT "3494"
 
-void* perform(user_t*);
+void* handle_connection(user_t*);
 
 user_store_t user_store;
 
@@ -105,7 +105,7 @@ main(int argc, char* argv[])
         printf("user addr: %p - sockfd addr:%p\n", user, &user->sockfd);
 
         pthread_t thread;
-        int err = pthread_create(&thread, NULL, (void*)&perform, user);
+        int err = pthread_create(&thread, NULL, (void*)&handle_connection, user);
         if (err < 0)
             print_error("can't create thread");
     }
@@ -113,7 +113,7 @@ main(int argc, char* argv[])
 }
 
 void *
-perform(user_t* user)
+handle_connection(user_t* user)
 {
     /* Store user in the user store */
     us_add(&user_store, user);
