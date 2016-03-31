@@ -125,6 +125,13 @@ perform(user_t* user)
         exit(errno);
     }
 
+    char welcome_buffer[64];
+    strcpy(welcome_buffer, "Welcome ");
+    strcat(welcome_buffer, user->nick);
+    strcat(welcome_buffer, "\n");
+    send(user->sockfd, welcome_buffer, strlen(welcome_buffer), 0);
+    send(user->sockfd, "> ", 2, 0);
+
     char msg_buffer[1024];
     while (recv(user->sockfd, &msg_buffer, 1024, 0)) {
         char res_buffer[1024];
@@ -135,6 +142,8 @@ perform(user_t* user)
 
         for (i = 0; i < user_store.size; i++)
             send(user_store.bag[i]->sockfd, res_buffer, strlen(res_buffer), 0);
+
+        send(user->sockfd, "> ", 2, 0);
     }
     return NULL;
 }
